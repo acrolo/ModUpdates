@@ -1,0 +1,181 @@
+Patch "Boss Select" by "Hyper"
+{
+    // Hide play time on slots.
+    WriteProtected<byte>
+    (
+        /* 0x14133A768 */
+        ScanSignature
+        (
+            "%3d:%02d:%02d",
+            "xxxxxxxxxxxxx"
+        ),
+
+        0x00
+    );
+
+    // Change title music.
+    WriteProtected<byte>
+    (
+        /* 0x141236300 */
+        ScanSignature
+        (
+            "bgm_sys_title",
+            "xxxxxxxxxxxxx"
+        ),
+
+        System.Text.Encoding.UTF8.GetBytes("bgm_enemy\0")
+    );
+
+    // Share load description with save.
+    WriteAsmHook
+    (
+        $@"
+            push rcx
+
+            mov rcx, {(long)System.Runtime.InteropServices.Marshal.StringToHGlobalAnsi("menu_field_sa1_save_mtips")}
+            lea rax, qword ptr [rcx]
+            mov qword ptr [rbp + 0x57 + 0xFFFFFFFFFFFFFFB0], rax
+
+            pop rcx
+        ",
+
+        0x14091FABB,
+
+        HookBehavior.Replace
+    );
+
+    // Disable New Game.
+    WriteNop
+    (
+        /* 0x14093E45E */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x55\xC0\x49\x8B\xCC\xE8",
+            "x????xxxxxxxx"
+        ),
+        
+        5
+    );
+
+    // Disable Arcade Mode.
+    WriteNop
+    (
+        /* 0x14093E502 */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8B\x5F\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x48\x8B\xCB\x48\x8B\x03\xFF\x50\xCC\x48\x85\xC0\x74\x16\x41\xB8\x03\x00\x00\x00",
+            "x????xxxxxxxxxxxxxxxxxxxxxxx?xxxxxxxxxxx"
+        ),
+        
+        5
+    );
+
+    // Disable Copyright.
+    WriteNop
+    (
+        /* 0x14093E607 */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8B\x5F\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x48\x8B\xCB\x48\x8B\x03\xFF\x50\xCC\x48\x85\xC0\x74\x16\x41\xB8\x07\x00\x00\x00",
+            "x????xxxxxxxxxxxxxxxxxxxxxxx?xxxxxxxxxxx"
+        ),
+        
+        5
+    );
+
+    // Disable Extras.
+    WriteNop
+    (
+        /* 0x14093E6DE */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x49\x8B\x86\x78\x02\x00\x00\x48\x8B\x57\x48",
+            "x????xxxxxxxxxxx"
+        ),
+                
+        5
+    );
+
+    /* 0x14D10DF81 */
+    long addr = ScanSignature
+    (
+        "\x74\x0E\x83\xFE\x01",
+        "xxxxx"
+    );
+    
+    // Disallow saving and loading.
+    if (addr != 0)
+        WriteNop(addr, 2);
+}
+
+Patch "Fix Empty Messages" by "Hyper"
+{
+    /* 0x14093AFBF */
+    long addr = ScanSignature
+    (
+        "\x57\x41\x56\x41\x57\x48\x83\xEC\x20\x4C\x8B\xF1\x48\x8B\xEA",
+        "xxxxxxxxxxxxxxx"
+    );
+
+    if (addr == 0)
+        return;
+
+    WriteAsmHook
+    (
+        @"
+            push rax
+
+            ; Checks the overlay type, expected 1.
+            mov eax, dword ptr [rdx + 0x18]
+            cmp eax, 1
+            jne ret
+
+            ; Checks if the string field is null.
+            mov rax, qword ptr [rdx + 0x48]
+            cmp rax, 0
+            jnz ret
+
+            ; Immediately return if the string field is null.
+            pop rax
+            ret
+
+        ret:
+            pop rax
+
+            ; Restore original code.
+            push rdi
+            push r14
+            push r15
+            sub  rsp, 0x20
+            mov  r14, rcx
+            mov  rbp, rdx
+        ",
+
+        addr,
+
+        HookBehavior.Replace
+    );
+}
+
+Patch "Set Window Title" by "Hyper"
+{
+    fixed (byte* pTitle = System.Text.Encoding.UTF8.GetBytes("Sonic Frontiers: Boss Select\0"))
+    {
+        WriteAsmHook
+        (
+            $@"
+                mov rax, {(long)pTitle}
+                lea rcx, qword ptr [rbp + 0x8C0 + 0xFFFFFFFFFFFFF8F0]
+            ",
+
+            /* 0x14007ADE5 */
+            ScanSignature
+            (
+                "\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x8D\x8D\xB0\x01\x00\x00",
+                "xxx????xxxxxxx"
+            ),
+
+            HookBehavior.Replace
+        );
+    }
+}

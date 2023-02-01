@@ -1,0 +1,47 @@
+{
+  "Enums": {
+    "Type": [
+      {
+        "DisplayName": "Easy",
+        "Value": ".\\save\\high\\savedata\\",
+        "Description": [
+          "All stats are at Maximum Level and all skills (including all story dependent ones) are unlocked."
+        ]
+      },
+      {
+        "DisplayName": "Normal",
+        "Value": ".\\save\\mid\\savedata\\",
+        "Description": [
+          "Stats are set to Level 50 and all skills are unlocked."
+        ]
+      },
+      {
+        "DisplayName": "Hard",
+        "Value": ".\\save\\low\\savedata\\",
+        "Description": [
+          "Stats are set to Level 1. Skills are unlockable at your discretion."
+        ]
+      }
+    ]
+  },
+  "Groups": [
+    {
+      "Name": "Main",
+      "DisplayName": "Options",
+      "Elements": [
+        {
+          "Name": "SaveFile",
+          "DisplayName": "Difficulty",
+          "Description": [
+            "Sets Sonic's upgrade and skill level."
+          ],
+          "Type": "Type",
+          "MinValue": null,
+          "MaxValue": null,
+          "DefaultValue": "Normal"
+        }
+      ]
+    }
+  ],
+  "IniFile": "mod.ini"
+}
