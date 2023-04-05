@@ -1,0 +1,4 @@
+- Unpack w[X]b0[Y] gedit with HedgeArcPack
+- Remove every action gedit, except the final one
+- Rename remaining action gedit to 00
+- Open action gedit in a hex editor and change Locator_phase[XX] to Locator_phase00
