@@ -45,7 +45,7 @@
       Start over from the beginning
     </text>
     <text name="menu_cmn_manualsave" id="334285630" font="Range_FNT_textbox" layout="Range_LAY_textbox">
-      LEVEL <var name="saveslot_num" />
+      OPTION <var name="saveslot_num" />
     </text>
     <text name="menu_cmn_op3gr_brightness_mtips" id="376791700" font="Range_FNT_mtips" layout="Range_LAY_mtips">
       Set the screen brightness
