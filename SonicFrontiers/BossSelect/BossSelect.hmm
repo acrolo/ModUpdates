@@ -94,6 +94,19 @@ Patch "Boss Select" by "Hyper"
         );
     }
 
+    // Hide "Turn page" option for Boss Rush.
+    WriteProtected<byte>
+    (
+        /* 0x1409796F1 */
+        ScanSignature
+        (
+            "\x0F\x85\x87\x00\x00\x00\x48\x85\xC0",
+            "xxxxxxxxx"
+        ),
+
+        0xE9, 0x88, 0x00, 0x00, 0x00
+    );
+
     // Change title music.
     WriteProtected<byte>
     (
