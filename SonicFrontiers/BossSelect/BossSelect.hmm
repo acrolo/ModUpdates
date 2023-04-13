@@ -1,0 +1,246 @@
+Patch "Boss Select" by "Hyper"
+//
+    static int SaveSlotIncrementation = 0;
+//
+{
+    // Hide play time on slots.
+    WriteProtected<byte>
+    (
+        ScanSignature
+        (
+            "%3d:%02d:%02d",
+            "xxxxxxxxxxxxx"
+        ),
+
+        0x00
+    );
+
+    // Reduce save slots to 3.
+    WriteProtected<byte>
+    (
+        /* 0x14098B8DF */
+        ScanSignature
+        (
+            "\x8D\x73\x04\x48\x8B\xD3",
+            "xxxxxx"
+        ),
+        
+        Assemble("lea esi, [rbx + 3]")
+    );
+
+    // Remove autosave slot text.
+    WriteProtected<byte>
+    (
+        /* 0x14098AEA8 */
+        ScanSignature
+        (
+            "\x75\x18\x48\x8D\x15\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xB5\x90\x01\x00\x00",
+            "xxxxx????x????xxxxxxx"
+        ),
+
+        0xEB
+    );
+
+    fixed (int* pSaveSlotIncrementation = &SaveSlotIncrementation)
+    {
+        // Reset incrementation.
+        WriteAsmHook
+        (
+            $@"
+                ; Restore original code.
+                mov qword ptr [rbp+ 0x180 + 0xFFFFFFFFFFFFFE30], rax
+                nop dword ptr [rax + 0]
+                nop dword ptr [rax + rax + 0]
+
+                mov r11, {(long)pSaveSlotIncrementation}
+                mov byte ptr [r11], 0
+            ",
+
+            /* 0x14098AA70 */
+            ScanSignature
+            (
+                "\x48\x89\x45\xB0\x0F\x1F\x40\x00",
+                "xxxxxxxx"
+            ),
+
+            HookBehavior.Replace
+        );
+
+        // Increment save slot counter to account for autosave being included.
+        WriteAsmHook
+        (
+            $@"
+                push rax
+
+                ; Restore original code.
+                mov dword ptr [rbp + 0x180 + 0xFFFFFFFFFFFFFE68 + 4], 0x8000007F
+
+                mov rax, {(long)pSaveSlotIncrementation}
+                mov r8d, dword ptr [rax]
+                inc r8d
+                mov dword ptr [rax], r8d
+
+                pop rax
+            ",
+
+            /* 0x14098AF41 */
+            ScanSignature
+            (
+                "\xC7\x45\xEC\x7F\x00\x00\x80\x44\x0F\xB6\x40\x14",
+                "xxxxxxxxxxxx"
+            ),
+
+            HookBehavior.Replace
+        );
+    }
+
+    // Change title music.
+    WriteProtected<byte>
+    (
+        ScanSignature
+        (
+            "bgm_sys_title",
+            "xxxxxxxxxxxxx"
+        ),
+
+        System.Text.Encoding.UTF8.GetBytes("bgm_enemy\0")
+    );
+
+    // Disable Continue.
+    WriteProtected<byte>
+    (
+        /* 0x14093E3AC */
+        ScanSignature
+        (
+            "\x74\x5E\x48\x83\x78\x08\x00",
+            "xxxxxxx"
+        ),
+        
+        0xEB
+    );
+
+    // Disable New Game.
+    WriteNop
+    (
+        /* 0x140975483 */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x55\xB8\x49\x8B\xCC\xE8\xCC\xCC\xCC\xCC\xB2\x05",
+            "x????xxxxxxxx????xx"
+        ),
+        
+        5
+    );
+
+    // Disable Arcade Mode.
+    WriteProtected<byte>
+    (
+        /* 0x14093E4AE */
+        ScanSignature
+        (
+            "\x74\x57\x48\x8B\x5F\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x48\x8B\xCB",
+            "xxxxxxxxxxxxxxxxxxxx"
+        ),
+        
+        0xEB
+    );
+
+    // Disable Cyber Space Challenge.
+    WriteNop
+    (
+        /* 0x1409755CC */
+        ScanSignature
+        (
+            "\x0F\x84\xAB\x00\x00\x00\x4C\x8B\x73\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x49\x8B\xCE\x49\x8B\x06\xFF\x50\xCC\x48\x85\xC0\x74\x16\x41\xB8\x03\x00\x00\x00",
+            "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx?xxxxxxxxxxx"
+        )
+        + 0x58,
+
+        5
+    );
+
+    // Disable Extras.
+    WriteNop
+    (
+        /* 0x1409758D7 */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8B\x86\x78\x02\x00\x00\x48\x8B\x53\x48",
+            "x????xxxxxxxxxxx"
+        ),
+
+        5
+    );
+}
+
+Patch "Fix Empty Messages" by "Hyper"
+{
+    /* 0x14093AFBF */
+    var sig = ScanSignature
+    (
+        "\x57\x41\x56\x41\x57\x48\x83\xEC\x20\x4C\x8B\xF1\x48\x8B\xEA",
+        "xxxxxxxxxxxxxxx"
+    );
+
+    if (sig == 0)
+        return;
+
+    WriteAsmHook
+    (
+        @"
+            push rax
+
+            ; Checks the overlay type, expected 1.
+            mov eax, dword ptr [rdx + 0x18]
+            cmp eax, 1
+            jne ret
+
+            ; Checks if the string field is null.
+            mov rax, qword ptr [rdx + 0x48]
+            cmp rax, 0
+            jnz ret
+
+            ; Immediately return if the string field is null.
+            pop rax
+            ret
+
+        ret:
+            pop rax
+
+            ; Restore original code.
+            push rdi
+            push r14
+            push r15
+            sub  rsp, 0x20
+            mov  r14, rcx
+            mov  rbp, rdx
+        ",
+
+        sig,
+
+        HookBehavior.Replace
+    );
+}
+
+Patch "Set Window Title" by "Hyper"
+{
+    fixed (byte* pTitle = System.Text.Encoding.UTF8.GetBytes("Sonic Frontiers: Boss Select\0"))
+    {
+        WriteAsmHook
+        (
+            $@"
+                mov rax, {(long)pTitle}
+                lea rcx, qword ptr [rbp + 0x8C0 + 0xFFFFFFFFFFFFF8F0]
+            ",
+
+            /* 0x14007ADE5 */
+            ScanSignature
+            (
+                "\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x8D\x8D\xB0\x01\x00\x00",
+                "xxx????xxxxxxx"
+            ),
+
+            HookBehavior.Replace
+        );
+    }
+}
