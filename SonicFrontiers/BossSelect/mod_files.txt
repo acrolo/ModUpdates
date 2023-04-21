@@ -1,2 +1,1 @@
-add raw/text/text_common_en.pac
 add mod.ini
