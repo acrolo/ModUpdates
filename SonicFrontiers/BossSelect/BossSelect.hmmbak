@@ -172,6 +172,18 @@ Patch "Boss Select" by "Hyper"
         5
     );
 
+    // Disable Extras.
+    WriteNop
+    (
+        /* 0x1409758D7 */
+        ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8B\x86\x78\x02\x00\x00\x48\x8B\x53\x48",
+            "x????xxxxxxxxxxx"
+        ),
+
+        5
+    );
 }
 
 Patch "Fix Empty Messages" by "Hyper"
