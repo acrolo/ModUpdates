@@ -1,2 +1,3 @@
+add BossSelect.dll
 add BossSelect.hmm
 add mod.ini
