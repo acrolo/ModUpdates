@@ -18,7 +18,7 @@ Patch "Boss Select" by "Hyper"
     // Reduce save slots to 3.
     WriteProtected<byte>
     (
-        /* 0x14098B8DF */
+        /* 0x140A0628F */
         ScanSignature
         (
             "\x8D\x73\x04\x48\x8B\xD3",
@@ -31,11 +31,11 @@ Patch "Boss Select" by "Hyper"
     // Remove autosave slot text.
     WriteProtected<byte>
     (
-        /* 0x14098AEA8 */
+        /* 0x140A0586E */
         ScanSignature
         (
-            "\x75\x18\x48\x8D\x15\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xB5\x90\x01\x00\x00",
-            "xxxxx????x????xxxxxxx"
+            "\x75\x11\x48\x8D\x15\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\xE9\x24\x01\x00\x00",
+            "xxxxx????x????xxxxx"
         ),
 
         0xEB
@@ -48,19 +48,19 @@ Patch "Boss Select" by "Hyper"
         (
             $@"
                 ; Restore original code.
-                mov qword ptr [rbp+ 0x180 + 0xFFFFFFFFFFFFFE30], rax
-                nop dword ptr [rax + 0]
-                nop dword ptr [rax + rax + 0]
+                mov    eax, dword ptr [rsp + 0x2C0 + 0xFFFFFFFFFFFFFD70]
+                mov    dword ptr [rbp + 0x1C0 + 0x18], eax
+                movaps xmmword ptr [rsp + 0x2C0 + 0xFFFFFFFFFFFFFFB0], xmm6
 
-                mov r11, {(long)pSaveSlotIncrementation}
-                mov byte ptr [r11], 0
+                mov    r11, {(long)pSaveSlotIncrementation}
+                mov    byte ptr [r11], 0
             ",
 
-            /* 0x14098AA70 */
+            /* 0x140A05394 */
             ScanSignature
             (
-                "\x48\x89\x45\xB0\x0F\x1F\x40\x00",
-                "xxxxxxxx"
+                "\x8B\x44\x24\x30\x89\x85\xD8\x01\x00\x00",
+                "xxxxxxxxxx"
             ),
 
             HookBehavior.Replace
@@ -71,19 +71,15 @@ Patch "Boss Select" by "Hyper"
         (
             $@"
                 push rax
-
-                ; Restore original code.
-                mov dword ptr [rbp + 0x180 + 0xFFFFFFFFFFFFFE68 + 4], 0x8000007F
-
-                mov rax, {(long)pSaveSlotIncrementation}
-                mov r8d, dword ptr [rax]
-                inc r8d
-                mov dword ptr [rax], r8d
-
-                pop rax
+                mov  dword ptr [rbp + 0x1C0 + 0xFFFFFFFFFFFFFE28 + 4], 0x8000007F
+                mov  rax, {(long)pSaveSlotIncrementation}
+                mov  r8d, dword ptr [rax]
+                inc  r8d
+                mov  dword ptr [rax], r8d
+                pop  rax
             ",
 
-            /* 0x14098AF41 */
+            /* 0x140A058FB */
             ScanSignature
             (
                 "\xC7\x45\xEC\x7F\x00\x00\x80\x44\x0F\xB6\x40\x14",
@@ -97,7 +93,7 @@ Patch "Boss Select" by "Hyper"
     // Hide "Turn page" option for Boss Rush.
     WriteProtected<byte>
     (
-        /* 0x1409796F1 */
+        /* 0x1409F0F51 */
         ScanSignature
         (
             "\x0F\x85\x87\x00\x00\x00\x48\x85\xC0",
@@ -122,10 +118,10 @@ Patch "Boss Select" by "Hyper"
     // Disable Continue.
     WriteProtected<byte>
     (
-        /* 0x14093E3AC */
+        /* 0x1409E9AD3 */
         ScanSignature
         (
-            "\x74\x5E\x48\x83\x78\x08\x00",
+            "\x74\x5B\x48\x83\x78\x08\x00",
             "xxxxxxx"
         ),
         
@@ -135,11 +131,11 @@ Patch "Boss Select" by "Hyper"
     // Disable New Game.
     WriteNop
     (
-        /* 0x140975483 */
+        /* 0x1409E9B82 */
         ScanSignature
         (
-            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x55\xB8\x49\x8B\xCC\xE8\xCC\xCC\xCC\xCC\xB2\x05",
-            "x????xxxxxxxx????xx"
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x55\xD8\x49\x8B\xCF\xE8\xCC\xCC\xCC\xCC\x48\x8D\x55\xC0\x48\x8B\xC8\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4D\xE8\x4C\x8D\x2D",
+            "x????xxxxxxxx????xxxxxxxx????xxxxxxx"
         ),
         
         5
@@ -148,11 +144,11 @@ Patch "Boss Select" by "Hyper"
     // Disable Arcade Mode.
     WriteProtected<byte>
     (
-        /* 0x14093E4AE */
+        /* 0x1409E9F0C */
         ScanSignature
         (
-            "\x74\x57\x48\x8B\x5F\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x48\x8B\xCB",
-            "xxxxxxxxxxxxxxxxxxxx"
+            "\x74\x57\x4C\x8B\x73\x08",
+            "xxxxxx"
         ),
         
         0xEB
@@ -161,17 +157,16 @@ Patch "Boss Select" by "Hyper"
     // Disable Cyber Space Challenge.
     WriteNop
     (
-        /* 0x1409755CC */
+        /* 0x1409E9E74 */
         ScanSignature
         (
-            "\x0F\x84\xAB\x00\x00\x00\x4C\x8B\x73\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x49\x8B\xCE\x49\x8B\x06\xFF\x50\xCC\x48\x85\xC0\x74\x16\x41\xB8\x03\x00\x00\x00",
+            "\x0F\x84\x9B\x00\x00\x00\x4C\x8B\x73\x08\xBA\x08\x01\x00\x00\x41\xB8\x08\x00\x00\x00\x49\x8B\xCE\x49\x8B\x06\xFF\x50\xCC\x48\x85\xC0\x74\x16\x41\xB8\x04\x00\x00\x00",
             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx?xxxxxxxxxxx"
         )
         + 0x58,
 
         5
     );
-
 }
 
 Patch "Fix Empty Messages" by "Hyper"
