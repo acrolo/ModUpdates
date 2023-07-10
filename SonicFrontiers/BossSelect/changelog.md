@@ -1,3 +1,6 @@
+## Boss Select - Version 2.0.4
+- Wyvern no longer causes crash to desktop.
+
 ## Boss Select - Version 2.0.3
 - Fixes for Sonic Frontiers v1.30.
 
