@@ -1,0 +1,7 @@
+Patch "Fuck You instead of Try Again" by "Hyper"
+//
+    #lib "Converse"
+//
+{
+    Converse.Redirect("hud_info_miss", "FUCK YOU");
+}
